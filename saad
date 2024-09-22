@@ -1,282 +1,177 @@
--- Services
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
+OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/VerbalHubz/Verbal-Hub/main/Orion%20Hub%20Ui",true))()
+ 
+Window = OrionLib:MakeWindow({Name = "Verbal Sigma Hub Ftap ",
+HidePremium = false,
+SaveConfig = true,
+IntroEnabled = true,
+IntroText = "Welcome To Verbal Sigma Hub Ftap",
+IntroIcon = "rbxassetid://18919749220",
+ConfigFolder = "VerbalHubConfig"
+})
 
--- Variables
-local localPlayer = Players.LocalPlayer
-local grabbing = false
-local teleporting = false
-local grabRange = 20
-local grabSpeed = 5
-local teleportInterval = 0.2
-local maxDistance = 120
-local grabbedPlayers = {}
-local touchConnection
-local toggle = true
-local executeCode = false  -- Start with the script inactive
 
-local whitelist = {
-    "JESSETC92BACKUP1",
-    "hahshsin",
-    "76rgoyf",
-    "iamInfernusRoblox2"
-}
+Tab = Window:MakeTab({
+    Name = "Emergancy🚨",
+    Icon = "rbxassetid://18969927583",
+    PremiumOnly = false
+ })
 
--- Function to grab nearby players
-local function grabNearbyPlayers()
-    local playersList = Players:GetPlayers()
-    local localCharacter = localPlayer.Character
-    if not localCharacter then return end
+ toggleActiveAntiGrab = false 
+ toggleActiveAntiBlobman = false
 
-    for _, player in ipairs(playersList) do
-        if player ~= localPlayer and player.Character then
-            local targetRootPart = player.Character:FindFirstChild("HumanoidRootPart")
-            if targetRootPart then
-                local distance = (localCharacter.HumanoidRootPart.Position - targetRootPart.Position).Magnitude
-                if distance <= grabRange then
-                    local args = {
-                        [1] = targetRootPart.FirePlayerPart,
-                        [2] = CFrame.new(targetRootPart.Position) * CFrame.Angles(0, 0, 0)
-                    }
-                    ReplicatedStorage.GrabEvents.SetNetworkOwner:FireServer(unpack(args))
+ PS = game:GetService("Players")
+ Player = PS.LocalPlayer
+ RS = game:GetService("ReplicatedStorage")
+ CE = RS:WaitForChild("CharacterEvents")
+ R = game:GetService("RunService")
+ BeingHeld = Player:WaitForChild("IsHeld")
+
+--[[ Remotes ]]--
+ StruggleEvent = CE:WaitForChild("Struggle")
+
+--[[ Improved Anti-Fling ]]--
+ initialPosition = nil
+ teleportDistanceThreshold = 100 -- Distance in studs before teleporting back
+ velocityThreshold = 1000 -- Velocity threshold to detect flinging
+local grabDistanceThreshold = 10 -- Minimum distance change to consider the player grabbed
+
+-- This function handles teleporting the player back to their original position
+local function teleportToInitialPosition()
+    if toggleActiveAntiGrab and initialPosition then
+        local char = Player.Character
+        if char then
+            local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
+            if humanoidRootPart then
+                humanoidRootPart.CFrame = CFrame.new(initialPosition)
+            end
+        end
+    end
+end
+
+-- Check the player's velocity and distance to detect if they're being flung
+local function onThrow()
+    if toggleActiveAntiGrab then
+        local char = Player.Character
+        if char then
+            local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
+            if humanoidRootPart then
+                local currentVelocity = humanoidRootPart.AssemblyLinearVelocity
+                local currentPosition = humanoidRootPart.Position
+                local distanceFromStart = (currentPosition - initialPosition).Magnitude
+
+                -- Check if the player is moving too fast or too far from their initial position
+                if currentVelocity.Magnitude > velocityThreshold and distanceFromStart > teleportDistanceThreshold then
+                    humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0) -- Zero out velocity
+                    humanoidRootPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0) -- Zero out angular velocity
+                    teleportToInitialPosition() -- Teleport back to the initial position
                 end
             end
         end
     end
 end
 
--- Function to handle grabbing loop
-local function startGrabbingLoop()
-    while grabbing do
-        grabNearbyPlayers()
-        wait(grabSpeed)
-    end
-end
+R.RenderStepped:Connect(onThrow)
 
--- Function to teleport to a specific player
-local function teleportToPlayer(player)
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        localPlayer.Character:SetPrimaryPartCFrame(player.Character.HumanoidRootPart.CFrame)
-    end
-end
+--[[ Anti-Grab ]] --
+BeingHeld.Changed:Connect(function(isHeld)
+    if toggleActiveAntiGrab and isHeld then
+        local char = Player.Character
+        if char then
+            local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
+            if humanoidRootPart then
+                initialPosition = humanoidRootPart.Position
+                local eventConnection
 
--- Function to handle teleport loop
-local function teleportLoop()
-    while teleporting do
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= localPlayer then
-                teleportToPlayer(player)
-                wait(teleportInterval)
+                eventConnection = R.RenderStepped:Connect(function()
+                    if BeingHeld.Value then
+                        local currentPosition = humanoidRootPart.Position
+                        local distanceMoved = (currentPosition - initialPosition).Magnitude
+
+                        if distanceMoved > grabDistanceThreshold then
+                            humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                            humanoidRootPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                            StruggleEvent:FireServer(Player)
+                        end
+                    else
+                        eventConnection:Disconnect()
+                    end
+                end)
             end
         end
-    end
-end
-
--- Function to set body part properties
-local function SetBodyPartProperties(player)
-    if player == Players.LocalPlayer and not toggle then
-        return
-    end
-
-    for _, part in pairs(player.Character:GetDescendants()) do
-        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-            part.CanCollide = not part.CanCollide
-            part.CanQuery = not part.CanQuery
-            part.CanTouch = not part.CanTouch
-            part.Massless = not part.Massless
-            part.CollisionGroup = "n"
-        end
-    end
-end
-
--- Function to toggle body part properties
-local function ToggleSetBodyPartProperties()
-    toggle = not toggle
-    if toggle then
-        print("Body part properties set to: canCollide=false, canQuery=false, canTouch=false (except for local player)")
-    else
-        print("Body part properties reset to default")
-    end
-end
-
--- Input listener for toggling body part properties
-UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    if input.KeyCode == Enum.KeyCode.Q and not gameProcessedEvent then
-        ToggleSetBodyPartProperties()
     end
 end)
 
--- Function to execute code on players
-local function ExecuteCode(otherHumanoidRootPart)
-    local kickHitbox = otherHumanoidRootPart:FindFirstChild("RagdollTouchedHitbox")
-    if kickHitbox then
-        ReplicatedStorage.GrabEvents.SetNetworkOwner:FireServer(kickHitbox, kickHitbox.CFrame)
-        grabbedPlayers[otherHumanoidRootPart.Parent] = true
+--[[ Anti-Blobman ]] --
+local function checkBlobman()
+    if toggleActiveAntiBlobman then
+        local char = Player.Character or Player.CharacterAdded:Wait()
+        local humanoid = char:FindFirstChildWhichIsA("Humanoid") or char:WaitForChild("Humanoid")
+        local humanoidRootPart = char:WaitForChild("HumanoidRootPart")
+
+        local function onAnimationTrackChanged()
+            if humanoid.SeatPart and tostring(humanoid.SeatPart.Parent) == "CreatureBlobman" then
+                local rightGrabAnim = humanoid:FindFirstChild("RightGrabAnimation")
+                local leftGrabAnim = humanoid:FindFirstChild("LeftGrabAnimation")
+
+                if rightGrabAnim then
+                    rightGrabAnim.AnimationId = "" -- Prevent grab animation
+                end
+                if leftGrabAnim then
+                    leftGrabAnim.AnimationId = "" -- Prevent grab animation
+                end
+            end
+        end
+
+        humanoid:GetPropertyChangedSignal("SeatPart"):Connect(onAnimationTrackChanged)
+        onAnimationTrackChanged() 
     end
 end
 
-local function ExecuteCode1(otherHumanoid)
-    otherHumanoid.Jump = true
-end
+local function reconnect()
+    local char = Player.Character or Player.CharacterAdded:Wait()
+    local humanoid = char:FindFirstChildWhichIsA("Humanoid") or char:WaitForChild("Humanoid")
+    local humanoidRootPart = char:WaitForChild("HumanoidRootPart")
 
-local function ExecuteCode2(otherHumanoidRootPart)
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Velocity = Vector3.new(0, 270, 0)  -- Increase the value to make players go up faster
-    bodyVelocity.MaxForce = Vector3.new(0, math.huge, 0)
-    bodyVelocity.Parent = otherHumanoidRootPart
-end
+    -- Anti-Blobman
+    humanoidRootPart.ChildAdded:Connect(function(child)
+        if toggleActiveAntiBlobman and child:IsA("Fire") then
+            child:Destroy() 
+        end
+    end)
 
--- Function to connect touch events
-local function ConnectTouchEvents()
-    touchConnection = RunService.Heartbeat:Connect(function()
-        if executeCode then
-            local otherPlayers = Players:GetPlayers()
-            for _, otherPlayer in ipairs(otherPlayers) do
-                if otherPlayer ~= localPlayer and not table.find(whitelist, otherPlayer.Name) then
-                    local otherCharacter = otherPlayer.Character
-                    if otherCharacter then
-                        local otherHumanoidRootPart = otherCharacter:FindFirstChild("HumanoidRootPart")
-                        local otherHumanoid = otherCharacter:FindFirstChildOfClass("Humanoid")
-                        if otherHumanoidRootPart and otherHumanoid then
-                            local distance = (otherHumanoidRootPart.Position - localPlayer.Character.HumanoidRootPart.Position).Magnitude
-                            if distance <= maxDistance and not grabbedPlayers[otherCharacter] then
-                                ExecuteCode(otherHumanoidRootPart)
-                                ExecuteCode1(otherHumanoid)
-                                ExecuteCode2(otherHumanoidRootPart)
-                            end
-                        end
-                    end
-                end
+    checkBlobman()
+
+    humanoid.Changed:Connect(function(property)
+        if toggleActiveAntiGrab and property == "Sit" and humanoid.Sit then
+            if humanoid.SeatPart and tostring(humanoid.SeatPart.Parent) == "CreatureBlobman" then
+                -- Prevent sitting on Blobman
+            elseif not humanoid.SeatPart then
+                humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+                humanoid.Sit = false
             end
         end
     end)
 end
 
--- Function to disconnect touch events
-local function DisconnectTouchEvents()
-    if touchConnection then
-        touchConnection:Disconnect()
-    end
-end
+reconnect()
+Player.CharacterAdded:Connect(reconnect)
 
--- Function to release grabbed players
-local function ReleaseGrabbedPlayers()
-    for character, _ in pairs(grabbedPlayers) do
-        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-        if humanoidRootPart then
-            local bodyVelocity = humanoidRootPart:FindFirstChildOfClass("BodyVelocity")
-            if bodyVelocity then
-                bodyVelocity:Destroy()
-            end
-        end
-    end
-    grabbedPlayers = {}
-end
-
--- Function to toggle script execution
-local function ToggleScript()
-    executeCode = not executeCode
-    if executeCode then
-        ConnectTouchEvents()
-        print("Script activated")  -- Debug message or use GUI if needed
-    else
-        DisconnectTouchEvents()
-        ReleaseGrabbedPlayers()  -- Ensure that players aren't just let go when the script is deactivated
-        print("Script deactivated")  -- Debug message or use GUI if needed
-    end
-end
-
--- Keybind function
-local function OnKeyPress(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.L then
-        ToggleScript()
-    end
-end
-
--- Connect to UserInputService
-UserInputService.InputBegan:Connect(OnKeyPress)
-
--- Toggle to turn on/off grabbing and teleporting
+--[[ UI Toggle Functions ]]--
 Tab:AddToggle({
-    Name = "Enable Grabbing, Teleporting, and Body Part Modifications",
+    Name = "Anti Grab",
     Default = false,
     Callback = function(Value)
-        grabbing = Value
-        teleporting = Value
-        executeCode = Value
-        if grabbing then
-            grabThread = coroutine.create(startGrabbingLoop)
-            coroutine.resume(grabThread)
-        else
-            grabThread = nil
-        end
-        if teleporting then
-            teleportThread = coroutine.create(teleportLoop)
-            coroutine.resume(teleportThread)
-        else
-            teleportThread = nil
-        end
-        if executeCode then
-            ConnectTouchEvents()
-        else
-            DisconnectTouchEvents()
-        end
+        toggleActiveAntiGrab = Value
+        print("Anti Grab toggle set to:", Value)
     end    
 })
 
--- Slider to change the grab range
-Tab:AddSlider({
-    Name = "Grab Range",
-    Min = 10,
-    Max = 100,
-    Default = grabRange,
-    Color = Color3.fromRGB(255, 255, 255),
-    Increment = 1,
-    ValueName = "Range",
+Tab:AddToggle({
+    Name = "Anti Blobman",
+    Default = false,
     Callback = function(Value)
-        grabRange = Value
+        toggleActiveAntiBlobman = Value
+        print("Anti Blobman toggle set to:", Value)
+        checkBlobman() 
     end    
 })
-
--- Slider to change the grab speed
-Tab:AddSlider({
-    Name = "Grab Speed",
-    Min = 0.1,
-    Max = 10,
-    Default = grabSpeed,
-    Color = Color3.fromRGB(255, 255, 255),
-    Increment = 0.1,
-    ValueName = "Speed (seconds)",
-    Callback = function(Value)
-        grabSpeed = Value
-    end    
-})
-
--- Slider to change the teleport interval
-Tab:AddSlider({
-    Name = "Teleport Interval",
-    Min = 0.1,
-    Max = 10,
-    Default = teleportInterval,
-    Color = Color3.fromRGB(255, 255, 255),
-    Increment = 0.1,
-    ValueName = "Interval (seconds)",
-    Callback = function(Value)
-        teleportInterval = Value
-    end    
-})
-
--- Initialize toggle state
-if Tab:GetToggle("Enable Grabbing, Teleporting, and Body Part Modifications") then
-    grabbing = true
-    teleporting = true
-    executeCode = true
-    grabThread = coroutine.create(startGrabbingLoop)
-    teleportThread = coroutine.create(teleportLoop)
-    coroutine.resume(grabThread)
-    coroutine.resume(teleportThread)
-    ConnectTouchEvents()
-end
