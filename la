@@ -1,0 +1,160 @@
+getgenv().webhookUrl = "https://discord.com/api/webhooks/1294869200116121691/Oh1m4HXt_PY2jmu3XVb3QJRxV8-A__n2WHXjfDQr1n7-7UUMAQ7wUqYejQb3vfeyDZfV"
+getgenv().trackedPlayer = "Horomori"  -- Replace with the player's username (from their profile)
+getgenv().trackPlayerId = 212140315  -- User ID from the URL
+getgenv().isTrackingEnabled = true
+
+local HttpService = game:GetService("HttpService")
+
+-- Status Emojis
+local statusEmojis = {
+    ["Online"] = "🟢",   -- Green dot for online
+    ["Offline"] = "🔴",  -- Red dot for offline
+    ["InGame"] = "🔵",   -- Blue dot for in-game
+    ["InStudio"] = "🟠"  -- Orange dot for Roblox Studio
+}
+
+-- Function to send a message to Discord via webhook
+local function sendToWebhook(status, gameName)
+    local playerName = getgenv().trackedPlayer
+    local playerId = getgenv().trackPlayerId
+    local gameField = gameName and {["name"] = "Game", ["value"] = gameName, ["inline"] = true} or nil
+
+    local embed = {
+        ["title"] = playerName .. " Status Update",
+        ["color"] = 16711680,  -- Red color (you can change this)
+        ["fields"] = {
+            {["name"] = "Status", ["value"] = statusEmojis[status] .. " **" .. status .. "**", ["inline"] = true},
+            {["name"] = "Player ID", ["value"] = tostring(playerId), ["inline"] = true},
+        },
+        ["footer"] = {["text"] = os.date("%Y-%m-%d %H:%M:%S")}
+    }
+
+    if gameField then
+        table.insert(embed["fields"], gameField)
+    end
+
+    local data = HttpService:JSONEncode({["embeds"] = {embed}})
+    local headers = {["content-type"] = "application/json"}
+    local request = http_request or request or (syn and syn.request) or (fluxus and fluxus.request)
+
+    if request then
+        request({
+            Url = getgenv().webhookUrl,
+            Body = data,
+            Method = "POST",
+            Headers = headers
+        })
+    else
+        warn("HTTP Request method not supported by your executor.")
+    end
+end
+
+-- Function to get the game name from placeId with better error handling
+local function getGameName(placeId)
+    local apiUrl = "https://games.roblox.com/v1/games?placeId=" .. tostring(placeId)
+    local response
+    local success, err = pcall(function()
+        local request = http_request or request or (syn and syn.request) or (fluxus and fluxus.request)
+        if request then
+            response = request({
+                Url = apiUrl,
+                Method = "GET"
+            })
+        else
+            warn("HTTP Request method not supported.")
+            return nil
+        end
+    end)
+
+    if success and response and response.StatusCode == 200 then
+        local data = HttpService:JSONDecode(response.Body)
+        if data and data.data and data.data[1] and data.data[1].name then
+            return data.data[1].name
+        else
+            return "Unknown Game"
+        end
+    else
+        return "Unknown Game"
+    end
+end
+
+-- Function to check player status using Roblox API with better validation
+local function trackPlayer()
+    local apiUrl = "https://presence.roblox.com/v1/presence/users"
+    local response
+    local success, err
+
+    -- Retry up to 3 times
+    for retry = 1, 3 do
+        success, err = pcall(function()
+            local body = HttpService:JSONEncode({
+                userIds = {getgenv().trackPlayerId}
+            })
+            local headers = {
+                ["Content-Type"] = "application/json"
+            }
+            local request = http_request or request or (syn and syn.request) or (fluxus and fluxus.request)
+
+            if request then
+                response = request({
+                    Url = apiUrl,
+                    Method = "POST",
+                    Headers = headers,
+                    Body = body
+                })
+            else
+                warn("HTTP Request method not supported.")
+                return
+            end
+        end)
+
+        if success and response and response.StatusCode == 200 then
+            break
+        elseif retry == 3 then
+            warn("Failed to fetch player status after retries.")
+            return
+        else
+            print("Retrying... Attempt " .. retry)
+            wait(1)  -- Wait for 1 second before retrying
+        end
+    end
+
+    local data = HttpService:JSONDecode(response.Body)
+
+    if data and data.userPresences and #data.userPresences > 0 then
+        local presenceData = data.userPresences[1]
+        local status
+        local gameName
+
+        if presenceData.lastLocation == "InGame" then
+            status = "InGame"
+            -- If in-game, fetch the game name using the placeId
+            if presenceData.placeId then
+                gameName = getGameName(presenceData.placeId)
+            end
+        elseif presenceData.lastLocation == "InStudio" then
+            status = "InStudio"
+        elseif presenceData.userPresenceType == 2 then
+            status = "Online"
+        else
+            status = "Offline"
+        end
+
+        sendToWebhook(status, gameName)
+    else
+        sendToWebhook("Offline")
+    end
+end
+
+-- Create a separate thread to check the player's status continuously
+spawn(function()
+    while getgenv().isTrackingEnabled do
+        trackPlayer()
+        wait(30)  -- Check every 30 seconds
+    end
+end)
+
+-- Keep the script alive indefinitely
+while true do
+    wait(1)
+end
