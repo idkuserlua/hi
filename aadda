@@ -1,0 +1,59 @@
+-- Create the ScreenGui
+local player = game.Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "VerbalHubMessageGui"
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- Create the TextLabel
+local textLabel = Instance.new("TextLabel")
+textLabel.Size = UDim2.new(1, 0, 1, 0) -- Cover the whole screen
+textLabel.Position = UDim2.new(0, 0, 0, 0)
+textLabel.Text = "THIS SCRIPT WAS CRACKED BY VERBAL HUB ASSHOLE"
+textLabel.TextColor3 = Color3.new(1, 1, 1) -- Initial white color
+textLabel.BackgroundTransparency = 0.2 -- Slightly transparent background
+textLabel.BackgroundColor3 = Color3.new(0, 0, 0) -- Initial black background
+textLabel.Font = Enum.Font.SourceSansBold
+textLabel.TextScaled = true
+textLabel.Parent = screenGui
+textLabel.Visible = false
+
+-- TweenService for smooth color transitions
+local TweenService = game:GetService("TweenService")
+
+-- Function to cycle through rainbow colors
+local function rainbowEffect()
+    local colors = {
+        Color3.fromRGB(255, 0, 0),    -- Red
+        Color3.fromRGB(255, 127, 0),  -- Orange
+        Color3.fromRGB(255, 255, 0),  -- Yellow
+        Color3.fromRGB(0, 255, 0),    -- Green
+        Color3.fromRGB(0, 0, 255),    -- Blue
+        Color3.fromRGB(75, 0, 130),   -- Indigo
+        Color3.fromRGB(148, 0, 211)   -- Violet
+    }
+    
+    while textLabel.Visible do
+        for i = 1, #colors do
+            local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+            local tween = TweenService:Create(textLabel, tweenInfo, {TextColor3 = colors[i], BackgroundColor3 = colors[i]})
+            tween:Play()
+            tween.Completed:Wait()
+        end
+    end
+end
+
+-- Function to display the message
+local function showMessage()
+    textLabel.Visible = true
+    spawn(rainbowEffect) -- Start the rainbow effect
+    wait(10) -- Show for 10 seconds
+    textLabel.Visible = false
+end
+
+-- Show message on respawn or death
+player.CharacterAdded:Connect(function(character)
+    showMessage()
+end)
+
+-- Show the message immediately
+showMessage()
