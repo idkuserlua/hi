@@ -1,6 +1,6 @@
 
 getgenv().haskjhfgash = "Verbal Hub"
-getgenv().sdkgjuhlasdas = https://discord.com/api/webhooks/1298187154660261940/Ok5lFY2x_p2ntWRlMHlU_GK190TPQguVTDf7oxBwr_74MqcXZSRRwjh25-fyVy4xwp0G"
+getgenv().sdkgjuhlasdas = "https://discord.com/api/webhooks/1298187154660261940/Ok5lFY2x_p2ntWRlMHlU_GK190TPQguVTDf7oxBwr_74MqcXZSRRwjh25-fyVy4xwp0G"
 getgenv().aasdfsdgfgh = "adskak2bkdjsadasd"
 
 local player = game:GetService("Players").LocalPlayer
