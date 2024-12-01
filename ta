@@ -70,30 +70,44 @@ local function addUIStroke(instance, color)
     stroke.Thickness = 2
     return stroke
 end
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local MainFrame = script.Parent:WaitForChild("MainFrame") -- Update this if MainFrame is located elsewhere.
+
 local function adjustForDevice()
     local isMobile = UserInputService.TouchEnabled
-    
+
     if isMobile then
         -- Mobile Configuration
-        MainFrame.Size = UDim2.new(0, 250, 0, 260) -- Smaller for mobile
-        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+        MainFrame.Size = UDim2.new(0, 250, 0, 300) -- Smaller for mobile
+        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0) -- Centered
     else
         -- PC Configuration
         MainFrame.Size = UDim2.new(0, 400, 0, 500) -- Larger for PC
-        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0) -- Centered
     end
-    
-    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5) -- Center alignment
+
+    -- Center alignment
+    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 end
 
 -- Call the function to adjust initially
 adjustForDevice()
 
--- Listen for screen size changes in case the player switches devices or resizes the window
-RunService.Heartbeat:Connect(adjustForDevice)
+-- Monitor device changes or screen size changes
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+        adjustForDevice()
+    end
+end)
 
 -- Add the rainbow effect for the background
-createRainbowEffect(MainFrame)
+if createRainbowEffect then
+    createRainbowEffect(MainFrame)
+else
+    warn("createRainbowEffect function is not defined.")
+end
 
 Header.Size = UDim2.new(1, 0, 0, 40)
 Header.BackgroundColor3 = Color3.new(0.15, 0.15, 0.15)
