@@ -57,37 +57,38 @@ local DiscordButton = Instance.new("TextButton", MainFrame)
 local DeviceLabel = Instance.new("TextLabel", MainFrame)
 local ToggleButton = Instance.new("TextButton", ScreenGui)
 
--- UI Corner and Stroke
-local function addUICorner(instance, radius)
-    local uiCorner = Instance.new("UICorner", instance)
-    uiCorner.CornerRadius = UDim.new(0, radius)
-    return uiCorner
-end
 
-local function addUIStroke(instance, color)
-    local stroke = Instance.new("UIStroke", instance)
-    stroke.Color = color
-    stroke.Thickness = 2
-    return stroke
-end
 local UserInputService = game:GetService("UserInputService")
-
--- Styling
-ScreenGui.ResetOnSpawn = false
 
 -- Check if the player is on mobile or PC
 local isMobile = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
 
--- Set sizes for mobile and PC
-local mobileSize = UDim2.new(0, 240, 0, 280) -- Smaller for mobile
-local pcSize = UDim2.new(0, 320, 0, 380)     -- Larger for PC
+-- Create sizes for mobile and PC
+local mobileSize = UDim2.new(0, 240, 0, 280) -- Smaller size for mobile
+local pcSize = UDim2.new(0, 320, 0, 380)     -- Larger size for PC
 
+-- Set properties for the MainFrame
 MainFrame.Size = isMobile and mobileSize or pcSize
-MainFrame.Position = UDim2.new(0.6, -60, 0.6, -60)
-MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0) -- Centered on the screen
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)  -- Align center
 MainFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 MainFrame.ClipsDescendants = true
 
+-- Utility functions for UI styling
+local function addUICorner(parent, cornerRadius)
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, cornerRadius)
+    UICorner.Parent = parent
+end
+
+local function addUIStroke(parent, strokeColor)
+    local UIStroke = Instance.new("UIStroke")
+    UIStroke.Thickness = 1
+    UIStroke.Color = strokeColor
+    UIStroke.Parent = parent
+end
+
+-- Add styling
 addUICorner(MainFrame, 12)
 addUIStroke(MainFrame, Color3.new(0.8, 0.8, 0.8))
 
