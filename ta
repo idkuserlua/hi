@@ -57,61 +57,63 @@ local DiscordButton = Instance.new("TextButton", MainFrame)
 local DeviceLabel = Instance.new("TextLabel", MainFrame)
 local ToggleButton = Instance.new("TextButton", ScreenGui)
 
--- UI Corner and Stroke
-local function addUICorner(instance, radius)
-    local uiCorner = Instance.new("UICorner", instance)
-    uiCorner.CornerRadius = UDim.new(0, radius)
-    return uiCorner
-end
-
-local function addUIStroke(instance, color)
-    local stroke = Instance.new("UIStroke", instance)
-    stroke.Color = color
-    stroke.Thickness = 2
-    return stroke
-end
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
-local MainFrame = script.Parent -- Adjust this to reference your actual MainFrame
+-- Styling
+ScreenGui.ResetOnSpawn = false
+MainFrame.Size = UDim2.new(0, 320, 0, 380)
+MainFrame.Position = UDim2.new(0.6, -60, 0.6, -60)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+MainFrame.ClipsDescendants = true
+
+-- Utility Functions
+local function addUICorner(instance, radius)
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, radius)
+    UICorner.Parent = instance
+end
+
+local function addUIStroke(instance, color)
+    local UIStroke = Instance.new("UIStroke")
+    UIStroke.Color = color
+    UIStroke.Thickness = 2
+    UIStroke.Parent = instance
+end
+
+-- Add UI Enhancements
+addUICorner(MainFrame, 12)
+addUIStroke(MainFrame, Color3.new(0.8, 0.8, 0.8))
+
+-- Function to Handle Device Adjustments
+local userMoved = false -- Tracks if the user manually moves the GUI
 
 local function adjustForDevice()
-    local isMobile = UserInputService.TouchEnabled
-
-    if isMobile then
-        -- Mobile Configuration
-        MainFrame.Size = UDim2.new(0, 250, 0, 300) -- Smaller for mobile
-    else
-        -- PC Configuration
-        MainFrame.Size = UDim2.new(0, 400, 0, 500) -- Larger for PC
-    end
+    if userMoved then return end -- Skip adjustment if user moved the GUI
     
-    -- Center the MainFrame only if it hasn't been moved manually
-    if MainFrame:GetAttribute("ManuallyMoved") ~= true then
+    local isMobile = UserInputService.TouchEnabled
+    if isMobile then
+        MainFrame.Size = UDim2.new(0, 250, 0, 300) -- Smaller for mobile
         MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-        MainFrame.AnchorPoint = Vector2.new(0.5, 0.5) -- Center alignment
+    else
+        MainFrame.Size = UDim2.new(0, 320, 0, 380) -- Larger for PC
+        MainFrame.Position = UDim2.new(0.6, -60, 0.6, -60)
     end
 end
 
--- Detect when the player moves the MainFrame manually
+-- Detect Manual Movement
 MainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        MainFrame:SetAttribute("ManuallyMoved", true)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        userMoved = true
     end
 end)
 
--- Call the function to adjust initially
+-- Initialize
 adjustForDevice()
 
--- Listen for screen size changes
-UserInputService.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.Keyboard then
-        adjustForDevice()
-    end
-end)
-
--- Add the rainbow effect for the background
-createRainbowEffect(MainFrame)
+-- Listen for Screen Size Changes
+RunService.Heartbeat:Connect(adjustForDevice)
 
 Header.Size = UDim2.new(1, 0, 0, 40)
 Header.BackgroundColor3 = Color3.new(0.15, 0.15, 0.15)
