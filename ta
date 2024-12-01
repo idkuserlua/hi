@@ -73,7 +73,7 @@ end
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
-local MainFrame = script.Parent:WaitForChild("MainFrame") -- Update this if MainFrame is located elsewhere.
+local MainFrame = script.Parent -- Adjust this to reference your actual MainFrame
 
 local function adjustForDevice()
     local isMobile = UserInputService.TouchEnabled
@@ -81,33 +81,37 @@ local function adjustForDevice()
     if isMobile then
         -- Mobile Configuration
         MainFrame.Size = UDim2.new(0, 250, 0, 300) -- Smaller for mobile
-        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0) -- Centered
     else
         -- PC Configuration
         MainFrame.Size = UDim2.new(0, 400, 0, 500) -- Larger for PC
-        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0) -- Centered
     end
-
-    -- Center alignment
-    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    
+    -- Center the MainFrame only if it hasn't been moved manually
+    if MainFrame:GetAttribute("ManuallyMoved") ~= true then
+        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+        MainFrame.AnchorPoint = Vector2.new(0.5, 0.5) -- Center alignment
+    end
 end
+
+-- Detect when the player moves the MainFrame manually
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        MainFrame:SetAttribute("ManuallyMoved", true)
+    end
+end)
 
 -- Call the function to adjust initially
 adjustForDevice()
 
--- Monitor device changes or screen size changes
+-- Listen for screen size changes
 UserInputService.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.Keyboard then
         adjustForDevice()
     end
 end)
 
 -- Add the rainbow effect for the background
-if createRainbowEffect then
-    createRainbowEffect(MainFrame)
-else
-    warn("createRainbowEffect function is not defined.")
-end
+createRainbowEffect(MainFrame)
 
 Header.Size = UDim2.new(1, 0, 0, 40)
 Header.BackgroundColor3 = Color3.new(0.15, 0.15, 0.15)
