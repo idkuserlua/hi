@@ -57,77 +57,68 @@ local DiscordButton = Instance.new("TextButton", MainFrame)
 local DeviceLabel = Instance.new("TextLabel", MainFrame)
 local ToggleButton = Instance.new("TextButton", ScreenGui)
 
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-
--- Function to make GUI draggable
-local function makeDraggable(guiObject)
-    local dragging = false
-    local dragStart = nil
-    local startPos = nil
-
-    guiObject.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = guiObject.Position
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    guiObject.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            guiObject.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
+-- UI Corner and Stroke
+local function addUICorner(instance, radius)
+    local uiCorner = Instance.new("UICorner", instance)
+    uiCorner.CornerRadius = UDim.new(0, radius)
+    return uiCorner
 end
 
--- Adjust GUI for the device
+local function addUIStroke(instance, color)
+    local stroke = Instance.new("UIStroke", instance)
+    stroke.Color = color
+    stroke.Thickness = 2
+    return stroke
+end
+-- Track if the GUI has been manually adjusted
+local isAdjustedManually = false
+
 local function adjustForDevice()
+    if isAdjustedManually then
+        return -- Do not adjust if the user has moved the GUI manually
+    end
+
     local isMobile = UserInputService.TouchEnabled
 
     if isMobile then
         -- Mobile Configuration
-        MainFrame.Size = UDim2.new(0, 250, 0, 300) -- Smaller for mobile
+        MainFrame.Size = UDim2.new(0, 250, 0, 270) -- Smaller for mobile
+        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     else
         -- PC Configuration
-        MainFrame.Size = UDim2.new(0, 400, 0, 500) -- Larger for PC
+        MainFrame.Size = UDim2.new(0, 320, 0, 380) -- Larger for PC
+        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     end
 
-    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5) -- Center alignment
 end
 
--- Styling
-ScreenGui.ResetOnSpawn = false
-MainFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
-MainFrame.ClipsDescendants = true
+-- Detect manual adjustment
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isAdjustedManually = true
+    end
+end)
 
--- Apply styling effects
-addUICorner(MainFrame, 12)
-addUIStroke(MainFrame, Color3.new(0.8, 0.8, 0.8))
-
--- Adjust for device and enable drag
+-- Call the function to adjust initially
 adjustForDevice()
-makeDraggable(MainFrame)
 
 -- Listen for screen size changes in case the player switches devices or resizes the window
-RunService.Heartbeat:Connect(adjustForDevice)
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+        adjustForDevice()
+    end
+end)
 
--- Add the rainbow effect for the background
-createRainbowEffect(MainFrame)
-
+-- Styling
+ScreenGui.ResetOnSpawn = false
+MainFrame.Size = UDim2.new(0, 320, 0, 380)
+MainFrame.Position = UDim2.new(0.6, -60, 0.6, -60)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+MainFrame.ClipsDescendants = true
+addUICorner(MainFrame, 12)
+addUIStroke(MainFrame, Color3.new(0.8, 0.8, 0.8))
 Header.Size = UDim2.new(1, 0, 0, 40)
 Header.BackgroundColor3 = Color3.new(0.15, 0.15, 0.15)
 Header.ZIndex = 2
