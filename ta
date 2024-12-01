@@ -57,40 +57,43 @@ local DiscordButton = Instance.new("TextButton", MainFrame)
 local DeviceLabel = Instance.new("TextLabel", MainFrame)
 local ToggleButton = Instance.new("TextButton", ScreenGui)
 
-
-local UserInputService = game:GetService("UserInputService")
-
--- Check if the player is on mobile or PC
-local isMobile = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
-
--- Create sizes for mobile and PC
-local mobileSize = UDim2.new(0, 240, 0, 280) -- Smaller size for mobile
-local pcSize = UDim2.new(0, 320, 0, 380)     -- Larger size for PC
-
--- Set properties for the MainFrame
-MainFrame.Size = isMobile and mobileSize or pcSize
-MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0) -- Centered on the screen
-MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)  -- Align center
-MainFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
-MainFrame.ClipsDescendants = true
-
--- Utility functions for UI styling
-local function addUICorner(parent, cornerRadius)
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, cornerRadius)
-    UICorner.Parent = parent
+-- UI Corner and Stroke
+local function addUICorner(instance, radius)
+    local uiCorner = Instance.new("UICorner", instance)
+    uiCorner.CornerRadius = UDim.new(0, radius)
+    return uiCorner
 end
 
-local function addUIStroke(parent, strokeColor)
-    local UIStroke = Instance.new("UIStroke")
-    UIStroke.Thickness = 1
-    UIStroke.Color = strokeColor
-    UIStroke.Parent = parent
+local function addUIStroke(instance, color)
+    local stroke = Instance.new("UIStroke", instance)
+    stroke.Color = color
+    stroke.Thickness = 2
+    return stroke
+end
+local function adjustForDevice()
+    local isMobile = UserInputService.TouchEnabled
+    
+    if isMobile then
+        -- Mobile Configuration
+        MainFrame.Size = UDim2.new(0, 250, 0, 260) -- Smaller for mobile
+        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    else
+        -- PC Configuration
+        MainFrame.Size = UDim2.new(0, 400, 0, 500) -- Larger for PC
+        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    end
+    
+    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5) -- Center alignment
 end
 
--- Add styling
-addUICorner(MainFrame, 12)
-addUIStroke(MainFrame, Color3.new(0.8, 0.8, 0.8))
+-- Call the function to adjust initially
+adjustForDevice()
+
+-- Listen for screen size changes in case the player switches devices or resizes the window
+RunService.Heartbeat:Connect(adjustForDevice)
+
+-- Add the rainbow effect for the background
+createRainbowEffect(MainFrame)
 
 Header.Size = UDim2.new(1, 0, 0, 40)
 Header.BackgroundColor3 = Color3.new(0.15, 0.15, 0.15)
