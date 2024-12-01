@@ -1,0 +1,621 @@
+
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local validKey = "AURAUPDATE"
+local maxAttempts = 6
+local lockoutDuration = 86400 -- 24 hours
+local configFileName = "Verbal-Key.txt" -- Replace with your desired file name
+local isDragging = false
+local dragStart, startPos
+
+-- Stop the sound -- Sound setup
+
+local sound = Instance.new("Sound")
+
+sound.SoundId = "rbxassetid://9047796547" 
+
+sound.Parent = CoreGui -- Parent to CoreGui so it persists
+
+sound.Looped = true
+
+sound.Pitch = 1 -- Adjust as needed
+
+sound.Volume = 1.3 -- Adjust as needed
+
+
+
+-- Play the sound
+
+sound:Play()
+
+-- Rainbow Background Tween
+local function createRainbowEffect(guiElement)
+    local colorIndex = 0
+    RunService.RenderStepped:Connect(function()
+        colorIndex = colorIndex + 1
+        guiElement.BackgroundColor3 = Color3.fromHSV((colorIndex % 360) / 360, 1, 1)
+    end)
+end
+
+-- GUI Creation
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+local MainFrame = Instance.new("Frame", ScreenGui)
+local Header = Instance.new("Frame", MainFrame)
+local Title = Instance.new("TextLabel", Header)
+local TextBox = Instance.new("TextBox", MainFrame)
+local SubmitButton = Instance.new("TextButton", MainFrame)
+local AttemptsLabel = Instance.new("TextLabel", MainFrame)
+local CopyKeyButton = Instance.new("TextButton", MainFrame)
+local DiscordButton = Instance.new("TextButton", MainFrame)
+local DeviceLabel = Instance.new("TextLabel", MainFrame)
+local ToggleButton = Instance.new("TextButton", ScreenGui)
+
+-- UI Corner and Stroke
+local function addUICorner(instance, radius)
+    local uiCorner = Instance.new("UICorner", instance)
+    uiCorner.CornerRadius = UDim.new(0, radius)
+    return uiCorner
+end
+
+local function addUIStroke(instance, color)
+    local stroke = Instance.new("UIStroke", instance)
+    stroke.Color = color
+    stroke.Thickness = 2
+    return stroke
+end
+local UserInputService = game:GetService("UserInputService")
+
+-- Styling
+ScreenGui.ResetOnSpawn = false
+
+-- Check if the player is on mobile or PC
+local isMobile = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
+
+-- Set sizes for mobile and PC
+local mobileSize = UDim2.new(0, 240, 0, 280) -- Smaller for mobile
+local pcSize = UDim2.new(0, 320, 0, 380)     -- Larger for PC
+
+MainFrame.Size = isMobile and mobileSize or pcSize
+MainFrame.Position = UDim2.new(0.6, -60, 0.6, -60)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+MainFrame.ClipsDescendants = true
+
+addUICorner(MainFrame, 12)
+addUIStroke(MainFrame, Color3.new(0.8, 0.8, 0.8))
+
+Header.Size = UDim2.new(1, 0, 0, 40)
+Header.BackgroundColor3 = Color3.new(0.15, 0.15, 0.15)
+Header.ZIndex = 2
+addUICorner(Header, 12)
+
+Title.Text = "✨ Welcome to Verbal Hub Key System ✨"
+Title.Size = UDim2.new(1, 0, 1, 0)
+Title.Font = Enum.Font.GothamBold
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.TextScaled = true
+Title.TextWrapped = true
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+-- TextBox setup
+TextBox.Size = UDim2.new(0.8, 0, 0, 35)
+TextBox.Position = UDim2.new(0.1, 0, 0.3, 0)
+TextBox.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+TextBox.Font = Enum.Font.Gotham
+TextBox.TextColor3 = Color3.new(1, 1, 1)
+TextBox.PlaceholderText = "Enter Key"
+TextBox.Text = "" -- Start with no text
+TextBox.TextScaled = true
+addUICorner(TextBox, 10)
+
+-- Add a UIStroke for hover effects
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Thickness = 2
+uiStroke.Color = Color3.new(0.2, 0.2, 0.2) -- Default border color
+uiStroke.Parent = TextBox
+
+-- Customizable speed variable
+local hoverSpeed = 0.4  -- You can change this value to control the speed
+
+-- Tween definitions
+local tweenInfo = TweenInfo.new(
+    hoverSpeed,  -- Use the hoverSpeed variable here
+    Enum.EasingStyle.Sine, 
+    Enum.EasingDirection.InOut, 
+    0,     -- No repeats
+    false  -- Not looping
+) 
+
+local greenToRed = TweenService:Create(uiStroke, tweenInfo, { Color = Color3.fromRGB(255, 0, 0) }) 
+local redToWhite = TweenService:Create(uiStroke, tweenInfo, { Color = Color3.fromRGB(255, 255, 255) }) 
+local whiteToGreen = TweenService:Create(uiStroke, tweenInfo, { Color = Color3.fromRGB(0, 255, 0) }) 
+
+
+-- Create sound for TextBox interactions
+local inputSound = Instance.new("Sound")
+inputSound.SoundId = "rbxassetid://4499400560"
+inputSound.Volume = 0.5
+inputSound.Parent = TextBox
+
+local focusSound = Instance.new("Sound")
+focusSound.SoundId = "rbxassetid://4499400560"
+focusSound.Volume = 0.7
+focusSound.Parent = TextBox
+
+-- Ensure the text deletes only when explicitly cleared
+TextBox.Focused:Connect(function()
+    focusSound:Play()
+end)
+
+TextBox.FocusLost:Connect(function()
+    inputSound:Play()
+    if TextBox.Text == "" then
+        TextBox.PlaceholderText = "Enter Key"
+    end
+end)
+
+-- Hover effect: Flash between green, red and white
+local currentTween = greenToRed 
+
+-- Flag to track if the mouse is hovering
+local isHovering = false
+
+TextBox.MouseEnter:Connect(function()
+    isHovering = true
+    currentTween:Play()
+end)
+
+TextBox.MouseLeave:Connect(function()
+    isHovering = false
+    greenToRed:Cancel()
+    redToWhite:Cancel()
+    whiteToGreen:Cancel()
+    uiStroke.Color = Color3.new(0.2, 0.2, 0.2) 
+end)
+
+-- Switch between tweens when they complete, only if still hovering
+greenToRed.Completed:Connect(function()
+    if isHovering then
+        currentTween = redToWhite
+        currentTween:Play()
+    end
+end)
+
+redToWhite.Completed:Connect(function()
+    if isHovering then
+        currentTween = whiteToGreen
+        currentTween:Play()
+    end
+end)
+
+whiteToGreen.Completed:Connect(function()
+    if isHovering then 
+        currentTween = greenToRed
+        currentTween:Play() 
+    end
+end)
+
+-- Touch support for hover effect (using the same speed)
+TextBox.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        currentTween:Play()
+    end
+end)
+
+TextBox.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        greenToRed:Cancel()
+        redToWhite:Cancel()
+        whiteToGreen:Cancel()
+        uiStroke.Color = Color3.new(0.2, 0.2, 0.2) 
+    end
+end)
+-- Setup buttons and labels
+SubmitButton.Size = UDim2.new(0.8, 0, 0, 35)
+SubmitButton.Position = UDim2.new(0.1, 0, 0.5, 0)
+SubmitButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+SubmitButton.Text = "Submit Key"
+SubmitButton.Font = Enum.Font.GothamBold
+SubmitButton.TextColor3 = Color3.new(1, 1, 1)
+SubmitButton.TextScaled = true
+addUICorner(SubmitButton, 10)
+
+CopyKeyButton.Size = UDim2.new(0.8, 0, 0, 35)
+CopyKeyButton.Position = UDim2.new(0.1, 0, 0.7, 0)
+CopyKeyButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+CopyKeyButton.Text = "Copy Key Link"
+CopyKeyButton.Font = Enum.Font.GothamBold
+CopyKeyButton.TextColor3 = Color3.new(1, 1, 1)
+CopyKeyButton.TextScaled = true
+addUICorner(CopyKeyButton, 10)
+
+DiscordButton.Size = UDim2.new(0.8, 0, 0, 35)
+DiscordButton.Position = UDim2.new(0.1, 0, 0.85, 0)
+DiscordButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+DiscordButton.Text = "Discord Link"
+DiscordButton.Font = Enum.Font.GothamBold
+DiscordButton.TextColor3 = Color3.new(1, 1, 1)
+DiscordButton.TextScaled = true
+addUICorner(DiscordButton, 10)
+
+-- Adding sound when hovering or clicking
+local function setupSoundEffects(button)
+    -- Create the sound instance
+    local hoverSound = Instance.new("Sound")
+    hoverSound.SoundId = "rbxassetid://4499400560"
+    hoverSound.Volume = 0.5
+    hoverSound.Parent = button
+
+    local clickSound = Instance.new("Sound")
+    clickSound.SoundId = "rbxassetid://4499400560"
+    clickSound.Volume = 1
+    clickSound.Parent = button
+
+    -- Play hover sound when hovering over the button
+    button.MouseEnter:Connect(function()
+        hoverSound:Play()
+    end)
+
+    -- Stop hover sound when leaving the button
+    button.MouseLeave:Connect(function()
+        hoverSound:Stop()
+    end)
+
+    -- Play click sound when button is pressed
+    button.MouseButton1Click:Connect(function()
+        clickSound:Play()
+    end)
+
+    -- For mobile devices (touch input)
+    button.TouchTap:Connect(function()
+        clickSound:Play()
+    end)
+end
+
+-- Attach sound effects to buttons
+setupSoundEffects(SubmitButton)
+setupSoundEffects(CopyKeyButton)
+setupSoundEffects(DiscordButton)
+
+-- Labels
+AttemptsLabel.Size = UDim2.new(0.8, 0, 0, 20)
+AttemptsLabel.Position = UDim2.new(0.1, 0, 0.6, 0)
+AttemptsLabel.BackgroundTransparency = 1
+AttemptsLabel.Font = Enum.Font.Gotham
+AttemptsLabel.TextColor3 = Color3.new(1, 1, 1)
+AttemptsLabel.TextScaled = true
+
+DeviceLabel.Size = UDim2.new(0.8, 0, 0, 20)
+DeviceLabel.Position = UDim2.new(0.1, 0, 0.95, 0) -- Moved down a bit
+DeviceLabel.BackgroundTransparency = 1
+DeviceLabel.Font = Enum.Font.Gotham
+DeviceLabel.TextColor3 = Color3.new(1, 1, 1)
+DeviceLabel.TextScaled = true
+
+-- Toggle button
+ToggleButton.Size = UDim2.new(0, 30, 0, 30)
+ToggleButton.Position = UDim2.new(0.95, -35, 0.05, 0)
+ToggleButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+ToggleButton.Text = "+"
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.TextColor3 = Color3.new(1, 1, 1)
+addUICorner(ToggleButton, 15)
+
+-- Smooth Toggle Animation
+local isVisible = true
+ToggleButton.MouseButton1Click:Connect(function()
+    isVisible = not isVisible
+    local goal = { Position = isVisible and UDim2.new(0.5, -160, 0.5, -150) or UDim2.new(0.5, -160, 1.5, -150) }
+    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), goal):Play()
+    ToggleButton.Text = isVisible and "-" or "+"
+end)
+
+if UserInputService.TouchEnabled then
+    MainFrame.Size = UDim2.new(0, 240, 0, 280) -- Smaller size for mobile
+    MainFrame.Position = UDim2.new(0.5, -120, 0.5, -140) -- Adjust position
+    TextBox.Size = UDim2.new(0.8, 0, 0, 30) -- Smaller input box
+    SubmitButton.Size = UDim2.new(0.8, 0, 0, 30) -- Smaller button
+    CopyKeyButton.Size = UDim2.new(0.8, 0, 0, 30) -- Smaller button
+    DiscordButton.Size = UDim2.new(0.8, 0, 0, 30) -- Smaller button
+    AttemptsLabel.Size = UDim2.new(0.8, 0, 0, 15) -- Smaller label
+    DeviceLabel.Position = UDim2.new(0.1, 0, 0.92, 0) -- Adjusted device label position
+end
+local UserInputService = game:GetService("UserInputService")
+
+-- Function to determine if the player is on mobile
+local function isMobile()
+    return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+end
+
+-- Text size adjustments
+local mobileTextSize = 4 -- Smaller text size for mobile
+local pcTextSize = 7 -- Default text size for PC
+
+-- Determine the text size based on the device
+local textSize = isMobile() and mobileTextSize or pcTextSize
+
+-- Create TopLabel
+local TopLabel = Instance.new("TextLabel")
+TopLabel.Size = UDim2.new(1, 0, 0, 55)
+TopLabel.Position = UDim2.new(0, 0, 0, 65)
+TopLabel.Text = "How to Get Key: Copy the key link and paste it."
+TopLabel.TextColor3 = Color3.new(1, 1, 1)
+TopLabel.TextSize = textSize
+TopLabel.BackgroundTransparency = 1
+TopLabel.Parent = MainFrame
+
+-- Create DiscordLabel
+local DiscordLabel = Instance.new("TextLabel")
+DiscordLabel.Size = UDim2.new(1, 0, 0, 55)
+DiscordLabel.Position = UDim2.new(0, 0, 0, 50)
+DiscordLabel.Text = "Join Discord to get the key without doing any Linkverse."
+DiscordLabel.TextColor3 = Color3.new(1, 1, 1)
+DiscordLabel.TextSize = textSize
+DiscordLabel.BackgroundTransparency = 1
+DiscordLabel.Parent = MainFrame
+
+-- Rainbow Effect
+createRainbowEffect(MainFrame)
+
+-- Check Device Type (PC or Mobile)
+if UserInputService.TouchEnabled then
+    DeviceLabel.Text = "📱 You are on Mobile 📱"
+else
+    DeviceLabel.Text = "💻 You are on PC 💻"
+end
+
+
+-- Load configuration
+local function loadConfig()
+    if isfile(configFileName) then
+        local data = readfile(configFileName)
+        local config = game:GetService("HttpService"):JSONDecode(data)
+        return config
+    else
+        return { attempts = 0, unlockedAt = 0, hwid = "DO NOT SHARE HWID: ", key = "" }
+    end
+end
+
+-- Save configuration
+local function saveConfig(config)
+    local data = game:GetService("HttpService"):JSONEncode(config)
+    writefile(configFileName, data)
+end
+
+-- Update attempts label
+local function updateAttemptsLabel(attempts, isLocked)
+    if isLocked then
+        AttemptsLabel.Text = "Locked out for 24 hours!"
+        AttemptsLabel.TextColor3 = Color3.new(1, 0, 0)
+    else
+        AttemptsLabel.Text = "Attempts: " .. attempts .. "/" .. maxAttempts
+        AttemptsLabel.TextColor3 = attempts >= maxAttempts - 1 and Color3.new(1, 0, 0) or Color3.new(1, 1, 1)
+    end
+end
+
+-- Generate or retrieve HWID
+local function getHWID()
+    -- Replace this with actual HWID retrieval code if applicable
+    return "DO NOT SHARE HWID:" .. game:GetService("HttpService"):GenerateGUID(false)
+end
+
+-- Key validation function
+local function checkKey(inputKey)
+    local config = loadConfig()
+
+    -- Set HWID if not already set
+    if config.hwid == "DO NOT SHARE HWID: " then
+        config.hwid = getHWID()
+        saveConfig(config)
+    end
+
+    -- Check if the player is locked out
+    if os.time() < config.unlockedAt then
+        updateAttemptsLabel(config.attempts, true)
+        return
+    end
+
+    -- Check if the input key matches the valid key
+    if inputKey == validKey then
+        config.key = inputKey
+        config.attempts = 0 -- Reset attempts after success
+        saveConfig(config)
+
+        AttemptsLabel.Text = "Access Granted!thank you for choosing verbal :)"
+        AttemptsLabel.TextColor3 = Color3.new(0, 1, 0)
+
+        -- Execute the script
+        wait(0.6)
+        ScreenGui:Destroy()
+        sound:Destroy() -- Stop the sound
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/idkuserlua/hi/refs/heads/main/tyur", true))() -- Replace with your script URL
+    else
+        config.attempts = config.attempts + 1
+        if config.attempts >= maxAttempts then
+            config.unlockedAt = os.time() + lockoutDuration
+            updateAttemptsLabel(config.attempts, true)
+        else
+            updateAttemptsLabel(config.attempts, false)
+        end
+        saveConfig(config)
+    end
+end
+
+-- Button click handler
+SubmitButton.MouseButton1Click:Connect(function()
+    local inputKey = TextBox.Text
+    checkKey(inputKey)
+end)
+
+-- Initial setup
+local config = loadConfig()
+
+-- Set HWID if it's not already set
+if config.hwid == "DO NOT SHARE HWID: " then
+    config.hwid = getHWID()
+    saveConfig(config)
+end
+
+-- If the key is valid, automatically execute the script
+if config.key == validKey then
+    AttemptsLabel.Text = "Access Granted!skibidi"
+    AttemptsLabel.TextColor3 = Color3.new(0, 1, 0)
+    wait(0.6)
+    ScreenGui:Destroy() 
+    sound:Destroy() -- Stop the sound
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/idkuserlua/hi/refs/heads/main/tyur", true))() -- Replace with your script URL
+else
+    if os.time() < config.unlockedAt then
+        updateAttemptsLabel(config.attempts, true)
+    else
+        updateAttemptsLabel(config.attempts, false)
+    end
+end
+
+SubmitButton.MouseButton1Click:Connect(function()
+    local inputKey = TextBox.Text
+    checkKey(inputKey)
+end)
+
+CopyKeyButton.MouseButton1Click:Connect(function()
+    setclipboard("https://link-center.net/1252382/verbal-key-system")
+end)
+
+DiscordButton.MouseButton1Click:Connect(function()
+    setclipboard("https://discord.gg/fuRaSTCBSJ")
+end)
+-- Function to create a custom message
+local function createCustomMessage(text, imageId)
+    local messageFrame = Instance.new("Frame", ScreenGui)
+    messageFrame.Size = UDim2.new(0, 300, 0, 50)
+    messageFrame.Position = UDim2.new(1, -310, 1, -60) -- Bottom-right corner
+    messageFrame.AnchorPoint = Vector2.new(1, 1)
+    messageFrame.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+    messageFrame.BackgroundTransparency = 0.1
+    messageFrame.BorderSizePixel = 0
+    addUICorner(messageFrame, 10)
+    addUIStroke(messageFrame, Color3.new(1, 1, 1))
+
+    -- Image Icon
+    local imageLabel = Instance.new("ImageLabel", messageFrame)
+    imageLabel.Size = UDim2.new(0, 40, 0, 40)
+    imageLabel.Position = UDim2.new(0, 5, 0.5, 0)
+    imageLabel.AnchorPoint = Vector2.new(0, 0.5)
+    imageLabel.Image = "rbxassetid://15606112944" .. imageId
+    imageLabel.BackgroundTransparency = 1
+
+    -- Message Text
+    local messageText = Instance.new("TextLabel", messageFrame)
+    messageText.Size = UDim2.new(1, -50, 1, 0)
+    messageText.Position = UDim2.new(0, 50, 0, 0)
+    messageText.BackgroundTransparency = 1
+    messageText.Text = "🎉 " .. text .. " 🎉"
+    messageText.Font = Enum.Font.GothamBold
+    messageText.TextColor3 = Color3.new(1, 1, 1)
+    messageText.TextScaled = true
+    messageText.TextWrapped = true
+
+    -- Draggable feature
+    local isDragging = false
+    local dragStart, startPos
+
+    messageFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = true
+            dragStart = input.Position
+            startPos = messageFrame.Position
+        end
+    end)
+
+    messageFrame.InputChanged:Connect(function(input)
+        if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            messageFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    messageFrame.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = false
+        end
+    end)
+
+    -- Auto-remove after 5 seconds
+    task.delay(5, function()
+        messageFrame:Destroy()
+    end)
+end
+
+-- Button functionality
+CopyKeyButton.MouseButton1Click:Connect(function()
+    createCustomMessage("You copied the key link! 🔑", "1234567890")
+end)
+
+DiscordButton.MouseButton1Click:Connect(function()
+    createCustomMessage("You copied the Discord link! 💬", "9876543210")
+end)
+
+-- Drag Functionality for PC and Mobile
+local function onDragStart(input)
+    isDragging = true
+    dragStart = input.Position
+    startPos = MainFrame.Position
+end
+
+local function onDragEnd()
+    isDragging = false
+end
+
+local function onDrag(input)
+    if isDragging then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end
+
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        onDragStart(input)
+    end
+end)
+
+Header.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        onDragEnd()
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        onDrag(input)
+    end
+end)
+
+-- Load config on script start
+local config = loadConfig()
+if config.key == validKey then
+    AttemptsLabel.Text = "Access Granted!"
+    AttemptsLabel.TextColor3 = Color3.new(0, 1, 0)
+    wait(1)
+    ScreenGui:Destroy()
+else
+    if os.time() < config.unlockedAt then
+        updateAttemptsLabel(config.attempts, true)
+    else
+        updateAttemptsLabel(config.attempts, false)
+    end
+end
