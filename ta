@@ -80,16 +80,15 @@ local function adjustForDevice()
 
     local isMobile = UserInputService.TouchEnabled
 
+    -- Set size and position based on the device type
     if isMobile then
-        -- Mobile Configuration
-        MainFrame.Size = UDim2.new(0, 250, 0, 270) -- Smaller for mobile
-        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+        MainFrame.Size = UDim2.new(0, 250, 0, 250) -- Smaller size for mobile
     else
-        -- PC Configuration
-        MainFrame.Size = UDim2.new(0, 320, 0, 380) -- Larger for PC
-        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+        MainFrame.Size = UDim2.new(0, 320, 0, 320) -- Larger size for PC
     end
 
+    -- Center the frame on the screen
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5) -- Center alignment
 end
 
@@ -103,18 +102,13 @@ end)
 -- Call the function to adjust initially
 adjustForDevice()
 
--- Listen for screen size changes in case the player switches devices or resizes the window
-UserInputService.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
-        adjustForDevice()
-    end
+-- Listen for screen size changes or device switches
+RunService.RenderStepped:Connect(function()
+    adjustForDevice()
 end)
 
 -- Styling
 ScreenGui.ResetOnSpawn = false
-MainFrame.Size = UDim2.new(0, 320, 0, 380)
-MainFrame.Position = UDim2.new(0.6, -60, 0.6, -60)
-MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 MainFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 MainFrame.ClipsDescendants = true
 addUICorner(MainFrame, 12)
