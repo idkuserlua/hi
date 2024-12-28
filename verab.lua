@@ -1,5 +1,5 @@
 local p=game:GetService("Players")local lp=p.LocalPlayer w=game.Workspace l=game:GetService("Lighting")s=game:GetService("SoundService")
-local function m()local a=Instance.new("Sound",s)a.SoundId="rbxassetid://123150365153422"a.Looped=true a.Volume=1.8 a.PlaybackSpeed=0.65 a:Play()end
+local function m()local a=Instance.new("Sound",s)a.SoundId="rbxassetid://16190782786"a.Looped=true a.Volume=1.8 a.PlaybackSpeed=0.65 a:Play()end
 local function n()local b=Instance.new("Sky")b.Parent=l b.SkyboxBk="rbxassetid://0"b.SkyboxDn="rbxassetid://0"b.SkyboxFt="rbxassetid://0"b.SkyboxLf="rbxassetid://0"b.SkyboxRt="rbxassetid://0"b.SkyboxUp="rbxassetid://0"
 for _,c in pairs(w:GetDescendants())do if c:IsA("BasePart")then c.BrickColor=BrickColor.new("Black")c.Material=Enum.Material.SmoothPlastic end end l.Ambient=Color3.new(0,0,0)l.OutdoorAmbient=Color3.new(0,0,0)l.Brightness=0 end
 local function o()local d=Instance.new("Part")d.Size=Vector3.new(20,10,1)d.Anchored=true d.CFrame=w.CurrentCamera.CFrame*CFrame.new(-30,10,-20)d.BrickColor=BrickColor.new("Black")d.Material=Enum.Material.Neon d.Parent=w
