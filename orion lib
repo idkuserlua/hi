@@ -1162,33 +1162,18 @@ end)
 
 				local Slider = {Value = SliderConfig.Default, Save = SliderConfig.Save}
 				local Dragging = false
-				local SliderKnob 
-				local KnobValueText 
-				local FillValueTextLabel 
+				local SliderKnob -- Declare SliderKnob here
+				local KnobValueText -- Declare KnobValueText here
 
-				FillValueTextLabel = SetProps(MakeElement("Label", "", 12), {
-					Name = "FillValueText",
-					Size = UDim2.new(1, -10, 1, 0), 
-					Position = UDim2.new(0, 5, 0, 0), 
-					Font = Enum.Font.GothamSemibold, 
-					TextXAlignment = Enum.TextXAlignment.Left, 
-					TextYAlignment = Enum.TextYAlignment.Center,
-					TextColor3 = OrionLib.Themes[OrionLib.SelectedTheme].Text, 
-					BackgroundTransparency = 1,
-                    TextTransparency = 0 -- Ensure opaque
-				})
-				AddThemeObject(FillValueTextLabel, "Text") 
-
-				local SliderDrag = SetChildren(SetProps(MakeElement("RoundFrame", SliderConfig.Color, 0, 5), { 
+				local SliderDrag = SetProps(MakeElement("RoundFrame", SliderConfig.Color, 0, 5), { -- Fill bar
 					Name = "SliderDrag",
 					Size = UDim2.new(0, 0, 1, 0), 
-					BackgroundTransparency = 0.3, 
+					BackgroundTransparency = 0.3, -- Semi-transparent fill
 					ClipsDescendants = true,
 					ZIndex = 2 
-				}), {
-					FillValueTextLabel 
 				})
-				
+				-- Removed SliderDrag.Value label, it's now KnobValueText
+
 				local SliderBar = SetChildren(SetProps(MakeElement("RoundFrame", SliderConfig.Color, 0, 5), {
 					Name = "SliderBar",
 					Size = UDim2.new(1, -24, 0, 26), 
@@ -1196,11 +1181,12 @@ end)
 					BackgroundTransparency = 0.9, 
 					ZIndex = 1
 				}), {
-					SetProps(MakeElement("Stroke"), { 
+					SetProps(MakeElement("Stroke"), { -- Stroke for the track itself
 						Color = SliderConfig.Color,
 						Transparency = 0.5 
 					}),
 					SliderDrag 
+					-- Removed SliderBar.Value label
 				})
 				
 				SliderKnob = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", nil, 0, 6), { 
@@ -1215,16 +1201,15 @@ end)
 					AddThemeObject(MakeElement("Stroke", nil, 1.5), "Stroke") 
 				}), "Text") 
 
-				KnobValueText = AddThemeObject(SetProps(MakeElement("Label", "", 12), { 
+				KnobValueText = AddThemeObject(SetProps(MakeElement("Label", "", 12), { -- Value text above knob
 					Name = "KnobValueText",
-					Size = UDim2.new(0, 60, 0, 16), 
-					AnchorPoint = Vector2.new(0.5, 1), 
+					Size = UDim2.new(0, 60, 0, 16), -- Width to accommodate text
+					AnchorPoint = Vector2.new(0.5, 1), -- Anchored bottom-center for positioning above knob
 					TextXAlignment = Enum.TextXAlignment.Center,
-					TextYAlignment = Enum.TextYAlignment.Bottom, 
+					TextYAlignment = Enum.TextYAlignment.Bottom, -- Align text to bottom of its frame
 					Font = Enum.Font.GothamBold,
 					ZIndex = SliderBar.ZIndex + 3, 
 					BackgroundTransparency = 1,
-                    TextTransparency = 0, -- Ensure opaque
 					Parent = SliderBar 
 				}), "Text")
 
@@ -1235,7 +1220,7 @@ end)
 				}), {
 					AddThemeObject(SetProps(MakeElement("Label", SliderConfig.Name, 15), {
 						Size = UDim2.new(1, -12, 0, 14),
-						Position = UDim2.new(0, 12, 0, 10), 
+						Position = UDim2.new(0, 12, 0, 10), -- Adjusted Y to make space for value text if it was part of SliderFrame
 						Font = Enum.Font.GothamBold,
 						Name = "Content"
 					}), "Text"),
@@ -1252,9 +1237,9 @@ end)
 						Dragging = true	
 						TweenService:Create(SliderKnob, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {Size = knobPressedSize}):Play() 
 						
-						local interactionPos = Input.Position 
+						local interactionPos = Input.Position -- For touch, this is screen coordinate
 						if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-							interactionPos = UserInputService:GetMouseLocation() 
+							interactionPos = UserInputService:GetMouseLocation() -- For mouse, get screen coordinate
 						end
 						local relativeX = interactionPos.X - SliderBar.AbsolutePosition.X
 						local SizeScale = math.clamp(relativeX / SliderBar.AbsoluteSize.X, 0, 1)
@@ -1297,11 +1282,8 @@ end)
 					
 					if KnobValueText then
 						KnobValueText.Text = displayValue
+						-- Position bottom-center of text 5px above SliderBar's top edge, aligned with knob's X
 						KnobValueText.Position = UDim2.new(percentage, 0, 0, -5) 
-					end
-					
-					if FillValueTextLabel then 
-						FillValueTextLabel.Text = displayValue
 					end
 					
 					SliderConfig.Callback(self.Value)
@@ -1734,7 +1716,7 @@ end)
 					TweenService:Create(TextboxFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(OrionLib.Themes[OrionLib.SelectedTheme].Second.R * 255 + 6, OrionLib.Themes[OrionLib.SelectedTheme].Second.G * 255 + 6, OrionLib.Themes[OrionLib.SelectedTheme].Second.B * 255 + 6)}):Play()
 				end)
 			end	
-			function ElementFunction:AddColorpicker(ColorpickerConfig) -- ## COLORPICKER UPDATED ##
+			function ElementFunction:AddColorpicker(ColorpickerConfig)
 				ColorpickerConfig = ColorpickerConfig or {}
 				ColorpickerConfig.Name = ColorpickerConfig.Name or "Colorpicker"
 				ColorpickerConfig.Default = ColorpickerConfig.Default or Color3.fromRGB(255,255,255)
@@ -1746,24 +1728,22 @@ end)
 				local Colorpicker = {Value = ColorpickerConfig.Default, Toggled = false, Type = "Colorpicker", Save = ColorpickerConfig.Save}
 
 				local ColorSelection = Create("ImageLabel", {
-					Name = "ColorSelectionPuck",
 					Size = UDim2.new(0, 18, 0, 18),
 					Position = UDim2.new(ColorS, 0, 1 - ColorV, 0), 
 					ScaleType = Enum.ScaleType.Fit,
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					BackgroundTransparency = 1,
-					Image = "http://www.roblox.com/asset/?id=4805639000", -- Standard picker puck image
+					Image = "http://www.roblox.com/asset/?id=4805639000",
                     ZIndex = 3
 				})
 
 				local HueSelection = Create("ImageLabel", {
-					Name = "HueSelectionPuck",
 					Size = UDim2.new(0, 18, 0, 18),
 					Position = UDim2.new(0.5, 0, ColorH, 0), 
 					ScaleType = Enum.ScaleType.Fit,
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					BackgroundTransparency = 1,
-					Image = "http://www.roblox.com/asset/?id=4805639000", 
+					Image = "http://www.roblox.com/asset/?id=4805639000",
                     ZIndex = 3
 				})
 
@@ -1786,7 +1766,7 @@ end)
 					Visible = false,
                     ZIndex = 2
 				}, {
-					Create("UIGradient", {Rotation = 270, Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),ColorSequenceKeypoint.new(1/6,Color3.fromRGB(255,255,0)), ColorSequenceKeypoint.new(2/6, Color3.fromRGB(0, 255, 0)), ColorSequenceKeypoint.new(3/6, Color3.fromRGB(0, 255, 255)), ColorSequenceKeypoint.new(4/6, Color3.fromRGB(0, 0, 255)), ColorSequenceKeypoint.new(5/6, Color3.fromRGB(255, 0, 255)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0))},}),
+					Create("UIGradient", {Rotation = 270, Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 4)),ColorSequenceKeypoint.new(0.16,Color3.fromRGB(255,255,0)), ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)), ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 255)), ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0, 0, 255)), ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 4))},}),
 					Create("UICorner", {CornerRadius = UDim.new(0, 5)}),
 					HueSelection
 				})
@@ -1801,10 +1781,10 @@ end)
 					HueImage,
 					ColorImage,
 					Create("UIPadding", {
-						PaddingLeft = UDim2.new(0, 35),
-						PaddingRight = UDim2.new(0, 35),
-						PaddingBottom = UDim2.new(0, 10),
-						PaddingTop = UDim2.new(0, 17)
+						PaddingLeft = UDim.new(0, 35),
+						PaddingRight = UDim.new(0, 35),
+						PaddingBottom = UDim.new(0, 10),
+						PaddingTop = UDim.new(0, 17)
 					})
 				})
 
@@ -1812,15 +1792,14 @@ end)
 					Size = UDim2.new(1, 0, 1, 0)
 				})
 
-				local ColorpickerBox = SetChildren(SetProps(MakeElement("RoundFrame", ColorpickerConfig.Default, 0, 4), { 
-					BackgroundColor3 = ColorpickerConfig.Default, -- Explicitly set default color for swatch
+				local ColorpickerBox = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", ColorpickerConfig.Default, 0, 4), { 
 					Size = UDim2.new(0, 24, 0, 24),
 					Position = UDim2.new(1, -12, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5)
 				}), {
-					AddThemeObject(MakeElement("Stroke"), "Stroke") -- Stroke is themed
-				})
-                -- Removed AddThemeObject(ColorpickerBox, "Main") to let it be a proper swatch
+					AddThemeObject(MakeElement("Stroke"), "Stroke")
+				}), "Main")
+                ColorpickerBox.BackgroundColor3 = ColorpickerConfig.Default 
 
 				local ColorpickerFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
 					Size = UDim2.new(1, 0, 0, 38),
@@ -1862,25 +1841,19 @@ end)
 				local ColorInputConn, HueInputConn 
 
 				local function UpdateColorPickerVisuals()
-                    local newColor = Color3.fromHSV(ColorH, ColorS, ColorV)
-					ColorpickerBox.BackgroundColor3 = newColor
+					ColorpickerBox.BackgroundColor3 = Color3.fromHSV(ColorH, ColorS, ColorV)
 					ColorImage.BackgroundColor3 = Color3.fromHSV(ColorH, 1, 1) 
-					Colorpicker:Set(newColor) -- This calls the callback and updates internal Value
+					Colorpicker:Set(ColorpickerBox.BackgroundColor3) 
 					if OrionLib.SaveCfg and ColorpickerConfig.Save then SaveCfg(game.GameId) end
 				end
                 
 				AddConnection(ColorImage.InputBegan, function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-						if ColorInputConn then ColorInputConn:Disconnect(); ColorInputConn = nil; end
+						if ColorInputConn then ColorInputConn:Disconnect() end
 						ColorInputConn = AddConnection(RunService.RenderStepped, function()
                             local interactionPos = input.UserInputType == Enum.UserInputType.Touch and input.Position or Vector2.new(Mouse.X, Mouse.Y)
-							local frameAbsPos = ColorImage.AbsolutePosition
-							local frameAbsSizeX = ColorImage.AbsoluteSize.X == 0 and 1 or ColorImage.AbsoluteSize.X
-							local frameAbsSizeY = ColorImage.AbsoluteSize.Y == 0 and 1 or ColorImage.AbsoluteSize.Y
-
-							local ColorX = math.clamp((interactionPos.X - frameAbsPos.X) / frameAbsSizeX, 0, 1)
-							local ColorY = math.clamp((interactionPos.Y - frameAbsPos.Y) / frameAbsSizeY, 0, 1)
-							
+							local ColorX = math.clamp((interactionPos.X - ColorImage.AbsolutePosition.X) / ColorImage.AbsoluteSize.X, 0, 1)
+							local ColorY = math.clamp((interactionPos.Y - ColorImage.AbsolutePosition.Y) / ColorImage.AbsoluteSize.Y, 0, 1)
 							ColorSelection.Position = UDim2.new(ColorX, 0, ColorY, 0)
 							ColorS = ColorX
 							ColorV = 1 - ColorY 
@@ -1889,46 +1862,39 @@ end)
 					end
 				end)
 
+				AddConnection(UserInputService.InputEnded, function(input) 
+					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+						if ColorInputConn then ColorInputConn:Disconnect(); ColorInputConn = nil end
+						if HueInputConn then HueInputConn:Disconnect(); HueInputConn = nil end
+					end
+				end)
+
 				AddConnection(HueImage.InputBegan, function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-						if HueInputConn then HueInputConn:Disconnect(); HueInputConn = nil; end
+						if HueInputConn then HueInputConn:Disconnect() end
 						HueInputConn = AddConnection(RunService.RenderStepped, function()
                             local interactionPos = input.UserInputType == Enum.UserInputType.Touch and input.Position or Vector2.new(Mouse.X, Mouse.Y)
-							local frameAbsPos = HueImage.AbsolutePosition
-							local frameAbsSizeY = HueImage.AbsoluteSize.Y == 0 and 1 or HueImage.AbsoluteSize.Y
-							
-							local HueY = math.clamp((interactionPos.Y - frameAbsPos.Y) / frameAbsSizeY, 0, 1)
+							local HueY = math.clamp((interactionPos.Y - HueImage.AbsolutePosition.Y) / HueImage.AbsoluteSize.Y, 0, 1)
 							HueSelection.Position = UDim2.new(0.5, 0, HueY, 0)
 							ColorH = HueY 
 							UpdateColorPickerVisuals()
 						end)
 					end
 				end)
-                
-                -- Global input ended to ensure connections are cleaned up
-                AddConnection(UserInputService.InputEnded, function(input) 
-					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-						if ColorInputConn then ColorInputConn:Disconnect(); ColorInputConn = nil; end
-						if HueInputConn then HueInputConn:Disconnect(); HueInputConn = nil; end
-					end
-				end)
 
-				function Colorpicker:Set(Value) -- Function for external script to set color, or internal updates
+
+				function Colorpicker:Set(Value) 
 					Colorpicker.Value = Value
                     local h,s,v = Color3.toHSV(Value)
-                    ColorH, ColorS, ColorV = h,s,v -- Update internal HSV state
-
-					ColorpickerBox.BackgroundColor3 = Value -- Update swatch
-                    ColorImage.BackgroundColor3 = Color3.fromHSV(ColorH, 1, 1) -- Update S/V picker background
-
-                    -- Update puck positions
+                    ColorH, ColorS, ColorV = h,s,v
+					ColorpickerBox.BackgroundColor3 = Value
+                    ColorImage.BackgroundColor3 = Color3.fromHSV(ColorH, 1, 1)
                     ColorSelection.Position = UDim2.new(ColorS,0,1-ColorV,0)
                     HueSelection.Position = UDim2.new(0.5,0,ColorH,0)
-					
-                    ColorpickerConfig.Callback(Value) -- Fire callback
+					ColorpickerConfig.Callback(Value)
 				end
 
-				Colorpicker:Set(ColorpickerConfig.Default) -- Initialize picker state correctly
+				Colorpicker:Set(ColorpickerConfig.Default) 
 				if ColorpickerConfig.Flag then				
 					OrionLib.Flags[ColorpickerConfig.Flag] = Colorpicker
 				end
